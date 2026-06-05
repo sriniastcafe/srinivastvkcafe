@@ -1,19 +1,27 @@
-export default function Cart({ lines, total, onAdd, onRemove, onCheckout, submitting }) {
+export default function Cart({ lines, total, count, onAdd, onRemove, onCheckout, submitting }) {
   return (
     <aside className="cart" aria-label="Your order">
-      <h2 className="cart__title">Your Order</h2>
+      <div className="cart__head">
+        <h2 className="cart__title">Your Order</h2>
+        {count > 0 && <span className="cart__count">{count} item{count > 1 ? "s" : ""}</span>}
+      </div>
 
       {lines.length === 0 ? (
-        <p className="cart__empty">Your cart is empty. Add something tasty! 🍵</p>
+        <div className="cart__empty">
+          <span className="cart__empty-emoji" aria-hidden="true">🛒</span>
+          <p>Your cart is empty.</p>
+          <p className="cart__empty-sub">Add something tasty from the menu!</p>
+        </div>
       ) : (
         <>
           <ul className="cart__list">
             {lines.map((line) => (
               <li key={line.id} className="cart__item">
+                <img className="cart__thumb" src={line.image} alt={line.name} />
                 <div className="cart__item-info">
                   <span className="cart__item-name">{line.name}</span>
                   <span className="cart__item-price">
-                    ₹{line.price} × {line.quantity} = ₹{line.price * line.quantity}
+                    ₹{line.price} × {line.quantity} = <strong>₹{line.price * line.quantity}</strong>
                   </span>
                 </div>
                 <div className="qty qty--sm">
@@ -39,9 +47,19 @@ export default function Cart({ lines, total, onAdd, onRemove, onCheckout, submit
             ))}
           </ul>
 
-          <div className="cart__total">
-            <span>Total</span>
-            <span data-testid="cart-total">₹{total}</span>
+          <div className="cart__summary">
+            <div className="cart__row">
+              <span>Item total</span>
+              <span>₹{total}</span>
+            </div>
+            <div className="cart__row cart__row--muted">
+              <span>Taxes &amp; charges</span>
+              <span>Included</span>
+            </div>
+            <div className="cart__total">
+              <span>To pay</span>
+              <span data-testid="cart-total">₹{total}</span>
+            </div>
           </div>
 
           <button
@@ -50,7 +68,7 @@ export default function Cart({ lines, total, onAdd, onRemove, onCheckout, submit
             onClick={onCheckout}
             disabled={submitting}
           >
-            {submitting ? "Placing order…" : "Place order"}
+            {submitting ? "Placing order…" : `Place order • ₹${total}`}
           </button>
         </>
       )}

@@ -13,6 +13,10 @@ export default function App() {
   const [customerName, setCustomerName] = useState("");
   const [table, setTable] = useState("");
 
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [vegOnly, setVegOnly] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [orderError, setOrderError] = useState(null);
@@ -49,14 +53,34 @@ export default function App() {
     [cartLines]
   );
 
-  const categories = useMemo(() => {
+  const cartCount = useMemo(
+    () => cartLines.reduce((sum, l) => sum + l.quantity, 0),
+    [cartLines]
+  );
+
+  const allCategories = useMemo(() => {
+    const seen = [];
+    for (const item of menu) if (!seen.includes(item.category)) seen.push(item.category);
+    return seen;
+  }, [menu]);
+
+  const visibleSections = useMemo(() => {
+    const q = search.trim().toLowerCase();
     const map = new Map();
     for (const item of menu) {
+      if (activeCategory !== "All" && item.category !== activeCategory) continue;
+      if (vegOnly && !item.veg) continue;
+      if (q && !`${item.name} ${item.description} ${item.category}`.toLowerCase().includes(q)) continue;
       if (!map.has(item.category)) map.set(item.category, []);
       map.get(item.category).push(item);
     }
     return [...map.entries()];
-  }, [menu]);
+  }, [menu, search, activeCategory, vegOnly]);
+
+  const resultCount = useMemo(
+    () => visibleSections.reduce((sum, [, items]) => sum + items.length, 0),
+    [visibleSections]
+  );
 
   async function handleCheckout() {
     setOrderError(null);
@@ -78,28 +102,95 @@ export default function App() {
     }
   }
 
+  function scrollToCart() {
+    document.getElementById("cart")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <div className="app">
-      <header className="header">
-        <div className="header__inner">
-          <div className="header__logo-badge">
-            <img src="/images/logo.png" alt="Tvk Cafe logo" className="header__logo-img" />
+      <nav className="nav">
+        <div className="nav__inner">
+          <div className="nav__brand">
+            <img src="/images/logo.png" alt="Tvk Cafe logo" className="nav__logo" />
+            <div className="nav__brand-text">
+              <span className="nav__name">Srinivas TVK Tea Cafe</span>
+              <span className="nav__sub">Chai • Coffee • Snacks</span>
+            </div>
           </div>
-          <h1 className="header__title">Srinivas TVK Tea Cafe</h1>
-          <p className="header__tag">Freshly brewed chai &amp; snacks, served with love</p>
+          <button type="button" className="nav__cart" onClick={scrollToCart}>
+            <span className="nav__cart-icon" aria-hidden="true">🛒</span>
+            <span className="nav__cart-label">
+              {cartCount > 0 ? `${cartCount} item${cartCount > 1 ? "s" : ""} • ₹${total}` : "Cart"}
+            </span>
+            {cartCount > 0 && <span className="nav__cart-badge">{cartCount}</span>}
+          </button>
+        </div>
+      </nav>
+
+      <header className="hero">
+        <div className="hero__inner">
+          <span className="hero__eyebrow">★ 4.7 • Freshly brewed • 100% Veg kitchen</span>
+          <h1 className="hero__title">Your love, your tea.</h1>
+          <p className="hero__tag">
+            Authentic chai, artisan coffee &amp; hot snacks — brewed fresh and delivered to your table.
+          </p>
+          <div className="hero__search">
+            <span className="hero__search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              value={search}
+              placeholder="Search for chai, coffee, snacks…"
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search the menu"
+            />
+          </div>
         </div>
       </header>
+
+      <div className="filters">
+        <div className="chips" role="tablist" aria-label="Menu categories">
+          <button
+            type="button"
+            className={`chip ${activeCategory === "All" ? "chip--active" : ""}`}
+            onClick={() => setActiveCategory("All")}
+          >
+            All
+          </button>
+          {allCategories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              className={`chip ${activeCategory === cat ? "chip--active" : ""}`}
+              onClick={() => setActiveCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        <label className="veg-toggle">
+          <input type="checkbox" checked={vegOnly} onChange={(e) => setVegOnly(e.target.checked)} />
+          <span className="veg-dot" aria-hidden="true" />
+          Veg only
+        </label>
+      </div>
 
       <main className="layout">
         <section className="menu" aria-label="Menu">
           {loading && <p className="status">Brewing the menu… 🫖</p>}
           {loadError && <p className="status status--error">Failed to load menu: {loadError}</p>}
 
+          {!loading && !loadError && resultCount === 0 && (
+            <p className="status">No items match “{search}”. Try another search.</p>
+          )}
+
           {!loading &&
             !loadError &&
-            categories.map(([category, items]) => (
+            visibleSections.map(([category, items]) => (
               <div key={category} className="menu-section">
-                <h2 className="menu-section__title">{category}</h2>
+                <div className="menu-section__head">
+                  <h2 className="menu-section__title">{category}</h2>
+                  <span className="menu-section__count">{items.length} items</span>
+                </div>
                 <div className="menu-grid">
                   {items.map((item) => (
                     <MenuCard
@@ -115,10 +206,11 @@ export default function App() {
             ))}
         </section>
 
-        <div className="sidebar">
+        <div className="sidebar" id="cart">
           <Cart
             lines={cartLines}
             total={total}
+            count={cartCount}
             onAdd={addToCart}
             onRemove={removeFromCart}
             onCheckout={handleCheckout}
@@ -127,6 +219,7 @@ export default function App() {
 
           {cartLines.length > 0 && (
             <div className="customer">
+              <h3 className="customer__title">Your details</h3>
               <label className="customer__field">
                 <span>Name</span>
                 <input
@@ -151,6 +244,16 @@ export default function App() {
           {orderError && <p className="status status--error">{orderError}</p>}
         </div>
       </main>
+
+      <footer className="footer">
+        <div className="footer__inner">
+          <div>
+            <strong>Srinivas TVK Tea Cafe</strong>
+            <p>Open daily • 7:00 AM – 10:00 PM</p>
+          </div>
+          <p className="footer__note">Made with ☕ &amp; 🍵 — your love, your tea.</p>
+        </div>
+      </footer>
 
       {confirmedOrder && (
         <div className="modal" role="dialog" aria-modal="true" aria-label="Order confirmed">
