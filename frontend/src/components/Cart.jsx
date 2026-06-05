@@ -1,4 +1,4 @@
-export default function Cart({ lines, total, count, onAdd, onRemove, onCheckout, submitting }) {
+export default function Cart({ lines, total, count, onAdd, onRemove, onCheckout, submitting, ctaLabel }) {
   return (
     <aside className="cart" aria-label="Your order">
       <div className="cart__head">
@@ -68,7 +68,7 @@ export default function Cart({ lines, total, count, onAdd, onRemove, onCheckout,
             onClick={onCheckout}
             disabled={submitting}
           >
-            {submitting ? "Placing order…" : `Place order • ₹${total}`}
+            {submitting ? "Placing order…" : ctaLabel || `Place order • ₹${total}`}
           </button>
         </>
       )}

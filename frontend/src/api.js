@@ -12,6 +12,10 @@ export function fetchMenu() {
   return fetch(`${BASE}/menu`).then(handle);
 }
 
+export function fetchOrders() {
+  return fetch(`${BASE}/orders`).then(handle);
+}
+
 export function placeOrder(payload) {
   return fetch(`${BASE}/orders`, {
     method: "POST",

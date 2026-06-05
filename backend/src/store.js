@@ -24,7 +24,7 @@ export function getOrder(id) {
  * Validate and create an order from a list of { id, quantity } items.
  * Returns { order } on success or { error } on validation failure.
  */
-export function createOrder({ items, customerName, table }) {
+export function createOrder({ items, customerName, table, paymentMethod }) {
   if (!Array.isArray(items) || items.length === 0) {
     return { error: "Order must contain at least one item." };
   }
@@ -58,6 +58,7 @@ export function createOrder({ items, customerName, table }) {
     table: table ? table.toString().slice(0, 20) : null,
     items: lineItems,
     total,
+    paymentMethod: paymentMethod ? paymentMethod.toString().slice(0, 20) : "upi",
     status: "received",
     createdAt: new Date().toISOString(),
   };
