@@ -81,12 +81,12 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <div className="header__brand">
-          <span className="header__logo" aria-hidden="true">🍵</span>
-          <div>
-            <h1 className="header__title">Srinivas TVK Tea Cafe</h1>
-            <p className="header__tag">Freshly brewed chai &amp; snacks, served with love</p>
+        <div className="header__inner">
+          <div className="header__logo-badge">
+            <img src="/images/logo.png" alt="Tvk Cafe logo" className="header__logo-img" />
           </div>
+          <h1 className="header__title">Srinivas TVK Tea Cafe</h1>
+          <p className="header__tag">Freshly brewed chai &amp; snacks, served with love</p>
         </div>
       </header>
 
